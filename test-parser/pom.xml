@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.bacoder.integration-tests</groupId>
+    <artifactId>parent</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>test-parser</artifactId>
+  <name>test-parser</name>
+  <description>Test parsers</description>
+  <packaging>jar</packaging>
+
+  <url>http://bacoder.com</url>
+  <scm>
+    <url>https://github.com/tfeng/integration-tests</url>
+    <connection>scm:git:https://github.com/tfeng/integration-tests.git</connection>
+    <developerConnection>scm:git:git@github.com:tfeng/integration-tests.git</developerConnection>
+  </scm>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <email>tfeng@berkeley.edu</email>
+      <name>Thomas Feng</name>
+      <url>https://github.com/tfeng</url>
+      <id>tfeng</id>
+    </developer>
+  </developers>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.bacoder.parser</groupId>
+      <artifactId>core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.bacoder.parser</groupId>
+      <artifactId>java-parser</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.bacoder.parser</groupId>
+      <artifactId>java-properties-parser</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.bacoder.scm-tools</groupId>
+      <artifactId>git-tools</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
