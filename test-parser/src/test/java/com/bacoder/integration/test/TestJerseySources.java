@@ -20,11 +20,15 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CommonTokenFactory;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.UnbufferedCharStream;
+import org.antlr.v4.runtime.UnbufferedTokenStream;
 import org.apache.log4j.Logger;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.TextProgressMonitor;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -43,55 +47,61 @@ import com.bacoder.parser.javaproperties.api.KeyValue;
 import com.bacoder.parser.javaproperties.api.Properties;
 import com.bacoder.scmtools.core.InitializationException;
 import com.bacoder.scmtools.core.ProcessingException;
+import com.bacoder.scmtools.git.GitConfig;
 import com.bacoder.scmtools.git.GitEntry;
 import com.bacoder.scmtools.git.GitEntryProcessor;
 import com.bacoder.scmtools.git.GitRepository;
 import com.google.common.io.Files;
 
 @Test
-public class TestParseJerseySources {
+public class TestJerseySources {
 
-  private static final Logger LOG = Logger.getLogger(TestParseJerseySources.class);
+  private static final Logger LOG = Logger.getLogger(TestJerseySources.class);
 
-  public TestParseJerseySources() throws InitializationException, URISyntaxException,
+  public void testJerseySources() throws InitializationException, URISyntaxException,
       ProcessingException {
-    GitRepository repository = new GitRepository(new URI("https://github.com/jersey/jersey.git"));
-    repository.process(ObjectId.fromString("ce83e9bc94e153a22ecd6917d6885c897e58d61e"),
-        new GitEntryProcessor() {
-          @Override
-          public void process(GitEntry entry) throws Exception {
-            String extension = Files.getFileExtension(entry.getPath());
-            if ("java".equals(extension)) {
-              LOG.info("Parsing: " + entry.getPath());
-              parseJava(entry.open().openStream());
-            } else if ("properties".equals(extension)) {
-              LOG.info("Parsing: " + entry.getPath());
-              Properties properties = parseProperties(entry.open().openStream());
+    GitRepository repository =
+        new GitRepository(new URI("https://github.com/jersey/jersey.git"),
+            new GitConfig().setCommitRevision(
+                ObjectId.fromString("ce83e9bc94e153a22ecd6917d6885c897e58d61e")).setProgressMonitor(
+                    new TextProgressMonitor()));
+    repository.process(new GitEntryProcessor() {
+      @Override
+      public void process(GitEntry entry) throws Exception {
+        String extension = Files.getFileExtension(entry.getPath());
+        if ("java".equals(extension)) {
+          LOG.info("Parsing: " + entry.getPath());
+          parseJava(entry.open().openStream());
+        } else if ("properties".equals(extension)) {
+          LOG.info("Parsing: " + entry.getPath());
+          Properties properties = parseProperties(entry.open().openStream());
 
-              java.util.Properties expected = new java.util.Properties();
-              try {
-                expected.load(entry.open().openStream());
-              } catch (Exception e) {
-                throw new RuntimeException("Unable to load properties" + e);
-              }
-
-              for (KeyValue keyValue : properties.getKeyValues()) {
-                String key = keyValue.getKey().getSanitizedText();
-                Assert.assertTrue(expected.containsKey(key),
-                    String.format("Key \"%s\" does not exist in expected Java properties", key));
-                String value = keyValue.getValue().getSanitizedText();
-                Assert.assertEquals(value, expected.get(key),
-                    String.format("Value \"%s\" does not match expected Java property value \"%s\"",
-                        value, expected.get(key)));
-              }
-            }
+          java.util.Properties expected = new java.util.Properties();
+          try {
+            expected.load(entry.open().openStream());
+          } catch (Exception e) {
+            throw new RuntimeException("Unable to load properties" + e);
           }
-        });
+
+          for (KeyValue keyValue : properties.getKeyValues()) {
+            String key = keyValue.getKey().getSanitizedText();
+            Assert.assertTrue(expected.containsKey(key),
+                String.format("Key \"%s\" does not exist in expected Java properties", key));
+            String value = keyValue.getValue().getSanitizedText();
+            Assert.assertEquals(value, expected.get(key),
+                String.format("Value \"%s\" does not match expected Java property value \"%s\"",
+                    value, expected.get(key)));
+          }
+        }
+      }
+    });
   }
 
   private CompilationUnit parseJava(InputStream inputStream) throws IOException {
-    JavaLexer lexer = new JavaLexer(new ANTLRInputStream(inputStream));
-    CommonTokenStream tokenStream = new CommonTokenStream(lexer);
+    CharStream stream = new UnbufferedCharStream(inputStream);
+    JavaLexer lexer = new JavaLexer(stream);
+    lexer.setTokenFactory(new CommonTokenFactory(true));
+    UnbufferedTokenStream<Token> tokenStream = new UnbufferedTokenStream<Token>(lexer);
     JavaParser parser = new JavaParser(tokenStream);
     parser.setErrorHandler(new BailErrorStrategy());
     CompilationUnitContext context = parser.compilationUnit();
@@ -101,8 +111,10 @@ public class TestParseJerseySources {
   }
 
   private Properties parseProperties(InputStream inputStream) throws IOException {
-    JavaPropertiesLexer lexer = new JavaPropertiesLexer(new ANTLRInputStream(inputStream));
-    CommonTokenStream tokenStream = new CommonTokenStream(lexer);
+    CharStream stream = new UnbufferedCharStream(inputStream);
+    JavaPropertiesLexer lexer = new JavaPropertiesLexer(stream);
+    lexer.setTokenFactory(new CommonTokenFactory(true));
+    UnbufferedTokenStream<Token> tokenStream = new UnbufferedTokenStream<Token>(lexer);
     JavaPropertiesParser parser = new JavaPropertiesParser(tokenStream);
     parser.setErrorHandler(new BailErrorStrategy());
     PropertiesContext context = parser.properties();

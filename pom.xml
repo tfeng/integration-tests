@@ -81,6 +81,7 @@
           <version>${maven-surefire-plugin.version}</version>
           <configuration>
             <useFile>false</useFile>
+            <argLine>-Xms2g -Xmx2g</argLine>
             <systemPropertyVariables>
               <log4j.configuration>file:///${project.basedir}/src/test/resources/log4j.xml</log4j.configuration>
             </systemPropertyVariables>
